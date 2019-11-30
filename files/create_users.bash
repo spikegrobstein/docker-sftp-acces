@@ -65,5 +65,5 @@ for user in "${users[@]}"; do
   create_user "${userdata[@]}"
 done
 
-/usr/sbin/sshd -D -e
+exec /usr/sbin/sshd -D -e
 
