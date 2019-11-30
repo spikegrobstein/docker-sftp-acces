@@ -77,6 +77,9 @@ fi
 mapfile -t users < "$userfile"
 
 for user in "${users[@]}"; do
+  if [[ -z "$user" || "$user" = "#"* ]]; then
+    continue
+  fi
   mapfile -t -d '|' userdata <<< "$user"
 
   create_user "${userdata[@]}"
