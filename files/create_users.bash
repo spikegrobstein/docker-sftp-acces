@@ -22,31 +22,33 @@ create_user() {
 
   local homedir="/home/$username"
 
-  if [[ -d "$homedir" ]]; then
-    # the home directory already exists so we probably made this user already. let's skip
-    warn "Skipping $username"
-    continue
-  fi
-
   warn "Creating user: $username"
 
   set -x
+
   useradd \
     -d "$homedir" \
     -s /bin/rbash \
     -c "$email" \
     "$username"
 
-  mkdir -p "$homedir/.ssh"
+  if [[ ! -d "$homedir" ]]; then
+    # if the home directory doesn't eixst (useradd does not create it)
+    # then let's set up the authorized_keys file and all that.
+    mkdir -p "$homedir/.ssh"
 
-  curl "https://github.com/${gh_username}.keys" > "$homedir/.ssh/authorized_keys"
+    curl "https://github.com/${gh_username}.keys" > "$homedir/.ssh/authorized_keys"
 
-  warn "Added keys for $username"
-  # cat "$homedir/.ssh/authorized_keys"
+    warn "Added keys for $username"
+    # cat "$homedir/.ssh/authorized_keys"
+  fi
 
+  # make sure the user owns their stuff
   chown -R "${username}:${username}" "$homedir"
 
+  # create the mounts
   create_mounts "$homedir"
+
   set +x
 }
 
