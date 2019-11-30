@@ -14,29 +14,37 @@ die() {
 }
 
 create_user() {
-  username="$1"
-  email="$2"
-  gh_username="$3"
+  local username="$1"
+  local email="$2"
+  local gh_username="$3"
 
   gh_username="$( tr -d $'\n' <<< "$gh_username" )"
+
+  local homedir="/home/$username"
+
+  if [[ -d "$homedir" ]]; then
+    # the home directory already exists so we probably made this user already. let's skip
+    warn "Skipping $username"
+    continue
+  fi
 
   warn "Creating user: $username"
 
   set -x
   useradd \
-    -d "/home/$username" \
+    -d "$homedir" \
     -s /bin/rbash \
     -c "$email" \
     "$username"
 
-  mkdir -p "/home/$username/.ssh"
+  mkdir -p "$homedir/.ssh"
 
-  curl "https://github.com/${gh_username}.keys" > "/home/$username/.ssh/authorized_keys"
+  curl "https://github.com/${gh_username}.keys" > "$homedir/.ssh/authorized_keys"
 
   warn "Added keys for $username"
-  cat "/home/$username/.ssh/authorized_keys"
+  # cat "$homedir/.ssh/authorized_keys"
 
-  chown -R "${username}:${username}" "/home/$username"
+  chown -R "${username}:${username}" "$homedir"
   set +x
 }
 
