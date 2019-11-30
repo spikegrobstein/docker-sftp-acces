@@ -5,7 +5,7 @@ set -o pipefail
 set -o nounset
 
 warn() {
-  printf "%s\n" "$@"
+  printf "%s\n" "$@" >&2
 }
 
 die() {
