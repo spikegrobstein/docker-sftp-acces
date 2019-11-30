@@ -45,8 +45,25 @@ create_user() {
   # cat "$homedir/.ssh/authorized_keys"
 
   chown -R "${username}:${username}" "$homedir"
+
+  create_mounts "$homedir"
   set +x
 }
+
+create_mounts() {
+  local homedir="$1"
+  local m
+  local mountname
+
+  for m in "$mountsdir"/*; do
+    mountname="$( basename "$m" )"
+
+    mkdir -p "$homedir/$mountname"
+    mount --bind "$m" "$homedir/$mountname" 
+  done
+}
+
+mountsdir="/mounts"
 
 userfile=/users.txt
 
