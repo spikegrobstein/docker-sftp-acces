@@ -89,6 +89,11 @@ backup_accounts() {
 
 # copy account files from data directory to restore
 restore_accounts() {
+  if [[ ! -s "/data/passwd" ]]; then
+    warn "No accounts to restore."
+
+    return
+  fi
   cp /data/* /etc/
 
   chown root:root "${account_files[@]}"
