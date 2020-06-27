@@ -30,6 +30,7 @@ create_user() {
 
   useradd \
     -d "$homedir" \
+    -m \
     -s /bin/rbash \
     -c "$email" \
     "$username" \
@@ -37,20 +38,18 @@ create_user() {
 
   backup_accounts
 
-  if [[ ! -d "$homedir" ]]; then
-    # if the home directory doesn't eixst (useradd does not create it)
-    # then let's set up the authorized_keys file and all that.
-    mkdir -p "$homedir/.ssh"
+  # set up ssh keys for the user
+  mkdir -p "$homedir/.ssh"
 
-    curl "https://github.com/${gh_username}.keys" >> "$homedir/.ssh/authorized_keys"
+  curl "https://github.com/${gh_username}.keys" \
+    >> "$homedir/.ssh/authorized_keys"
 
-    cat "$homedir/.ssh/authorized_keys" \
-      | sort -u \
-      | sponge "$homedir/.ssh/authorized_keys"
+  cat "$homedir/.ssh/authorized_keys" \
+    | sort -u \
+    | sponge "$homedir/.ssh/authorized_keys"
 
-    warn "Added keys for $username"
-    # cat "$homedir/.ssh/authorized_keys"
-  fi
+  warn "Added keys for $username"
+  # cat "$homedir/.ssh/authorized_keys"
 
   # make sure the user owns their stuff
   for d in "$homedir"/*; do
@@ -59,6 +58,7 @@ create_user() {
       continue
     fi
 
+    warn "Ensuring ownership of $d"
     chown -R "${username}:${username}" "$d"
   done
 
