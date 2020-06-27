@@ -1,6 +1,6 @@
 TAG=docker.home.spike.cx/sftp-access
 
-all: build push
+all: build
 
 build: .PHONY
 	docker build --tag $(TAG) .
