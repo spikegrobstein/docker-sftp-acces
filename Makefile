@@ -10,9 +10,11 @@ push: .PHONY
 
 run: .PHONY
 	docker run -ti \
-		--cap-add=SYS_ADMIN \
+		--name "sftp-test" \
 		-v "$(PWD)/users.txt:/users.txt" \
-		-v "$(PWD)/mounts:/mounts:ro" \
+		-v "/home/spike/Downloads:/mounts/downloads" \
+		-v "$(PWD)/home:/home" \
+		-v "$(PWD)/data:/data" \
 		-p 2222:22 \
 		$(TAG)
 

@@ -24,68 +24,131 @@ create_user() {
 
   warn "Creating user: $username"
 
-  set -x
+  # set -x
 
   useradd \
     -d "$homedir" \
     -s /bin/rbash \
     -c "$email" \
-    "$username"
+    "$username" \
+    || true
+
+  backup_accounts
 
   if [[ ! -d "$homedir" ]]; then
     # if the home directory doesn't eixst (useradd does not create it)
     # then let's set up the authorized_keys file and all that.
     mkdir -p "$homedir/.ssh"
 
-    curl "https://github.com/${gh_username}.keys" > "$homedir/.ssh/authorized_keys"
+    curl "https://github.com/${gh_username}.keys" >> "$homedir/.ssh/authorized_keys"
+
+    cat "$homedir/.ssh/authorized_keys" \
+      | sort -u \
+      | sponge "$homedir/.ssh/authorized_keys"
 
     warn "Added keys for $username"
     # cat "$homedir/.ssh/authorized_keys"
   fi
 
   # make sure the user owns their stuff
-  chown -R "${username}:${username}" "$homedir"
+  for d in "$homedir"/*; do
+    if [[ -L "$d" ]]; then
+      # skip any symlinks
+      continue
+    fi
+
+    chown -R "${username}:${username}" "$d"
+  done
+
+  pushd "$homedir" &> /dev/null
+
+  local dir_name 
 
   # create the mounts
-  create_mounts "$homedir"
+  for d in /mounts/*; do
+    dir_name=$( basename "$d" )
 
-  set +x
+    if [[ -L "$dir_name" ]]; then
+      continue
+    fi
+
+    ln -s "$d"
+  done
+
+  popd &> /dev/null
+
+  # set +x
 }
 
-create_mounts() {
-  local homedir="$1"
-  local m
-  local mountname
+# copy account files into data directory for persistence
+backup_accounts() {
+  cp "${account_files[@]}" "$datadir/"
+}
 
-  for m in "$mountsdir"/*; do
-    mountname="$( basename "$m" )"
+# copy account files from data directory to restore
+restore_accounts() {
+  cp /data/* /etc/
 
-    mkdir -p "$homedir/$mountname"
-    mount --bind "$m" "$homedir/$mountname" 
-  done
+  chown root:root "${account_files[@]}"
+  chmod 600 /etc/shadow /etc/shadow-
+  chmod 640 /etc/passwd /etc/passwd- /etc/group /etc/group-
+}
+
+action_init() {
+  local userdata
+
+  # first, restore accounts
+  restore_accounts
+
+  if [[ -s "$userfile" ]]; then
+    mapfile -t users < "$userfile"
+
+    for user in "${users[@]}"; do
+      if [[ -z "$user" || "$user" = "#"* ]]; then
+        continue
+      fi
+
+      userdata="$( tr '|' $'\n' <<< "$user" )"
+      mapfile -t userdata <<< "$userdata"
+
+      create_user "${userdata[@]}"
+    done
+  fi
+
+  exec /usr/sbin/sshd -D -e
+}
+
+action_add() {
+  if [[ "$#" -ne 3 ]]; then
+    die "Incorrect usage"
+  fi
+
+  create_user "$@"
 }
 
 mountsdir="/mounts"
 
 userfile=/users.txt
 
+datadir="/data"
+account_files=(
+  /etc/{shadow,group,passwd}
+  /etc/{shadow,group,passwd}-
+)
+
 # userfile looks like:
 # <username>|<email>|<github-username>
 
-if [[ ! -s "$userfile" ]]; then
-  die "No userfile at $userfile."
-fi
+action="$1"
+shift
 
-mapfile -t users < "$userfile"
+case "$action" in
+  init)
+    action_init "$@"
+    ;;
 
-for user in "${users[@]}"; do
-  if [[ -z "$user" || "$user" = "#"* ]]; then
-    continue
-  fi
-  mapfile -t -d '|' userdata <<< "$user"
-
-  create_user "${userdata[@]}"
-done
-
-exec /usr/sbin/sshd -D -e
+  add)
+    action_add "$@"
+    ;;
+esac
 
