@@ -8,12 +8,12 @@ RUN apt update \
         openssh-server
 
 COPY files/sshd_config /etc/ssh/sshd_config
-COPY files/create_users.bash /create_users
+COPY files/sftpctl /usr/bin/sftpctl
 COPY files/data /data
 
 RUN mkdir -p /run/sshd /ssh-keys \
       && touch /users.txt \
-      && chmod +x /create_users \
+      && chmod +x /usr/bin/sftpctl \
       && mv /etc/ssh/ssh_host_*key /ssh-keys/
 
 EXPOSE 22
@@ -21,4 +21,4 @@ VOLUME /ssh-keys
 VOLUME /home
 VOLUME /data
 
-CMD [ "/create_users", "init" ]
+CMD [ "sftpctl", "init" ]
