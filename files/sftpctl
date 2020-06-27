@@ -139,6 +139,10 @@ account_files=(
 # userfile looks like:
 # <username>|<email>|<github-username>
 
+if [[ -z "$1" ]]; then
+  die "USAGE: $0 <subcommand> [ <arg> ... ]"
+fi
+
 action="$1"
 shift
 
@@ -150,5 +154,8 @@ case "$action" in
   add)
     action_add "$@"
     ;;
+
+  *)
+    die "Unknown subcommand: $action"
 esac
 
