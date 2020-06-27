@@ -3,6 +3,8 @@
 set -o errexit
 set -o pipefail
 set -o nounset
+shopt -s nullglob
+shopt -s dotglob
 
 warn() {
   printf "%s\n" "$@" >&2
