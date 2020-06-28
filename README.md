@@ -93,3 +93,14 @@ to persist data between runs/reboots.
 
 User account data is backed up between executions of `sftpctl add` to `/data`. This should be a docker volume
 or a local filesystem mount to persist data between runs/reboots.
+
+## Todo
+
+ * append to user database when adding users ad-hoc
+ * provide a way to update github ssh keys and mounts
+ * provide per-user mounts
+ * chroot?
+ * provide tooling to list users
+ * provide incoming directory for users to upload files
+ * notifications when users upload files?
+
