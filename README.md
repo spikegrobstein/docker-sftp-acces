@@ -96,7 +96,6 @@ or a local filesystem mount to persist data between runs/reboots.
 
 ## Todo
 
- * append to user database when adding users ad-hoc
  * provide a way to update github ssh keys and mounts
  * provide per-user mounts
  * chroot?
