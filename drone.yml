@@ -1,0 +1,11 @@
+kind: pipeline
+name: default
+
+steps:
+- name: docker
+  image: plugins/docker
+  settings:
+    repo: docker.home.spike.cx/sftp-access
+    tags: latest
+    dockerfile: docker/Dockerfile
+
