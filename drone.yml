@@ -7,5 +7,5 @@ steps:
   settings:
     repo: docker.home.spike.cx/sftp-access
     tags: latest
-    dockerfile: docker/Dockerfile
+    dockerfile: Dockerfile
 
