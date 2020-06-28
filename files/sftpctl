@@ -28,13 +28,17 @@ create_user() {
 
   # set -x
 
-  useradd \
+  if useradd \
     -d "$homedir" \
     -m \
     -s /bin/rbash \
     -c "$email" \
-    "$username" \
-    || true
+    "$username"
+  then
+    warn "Adding $username to database"
+    printf "\n%s|%s|%s" "$username" "$email" "$gh_username" \
+      >> "$userfile"
+  fi
 
   backup_accounts
 
