@@ -366,6 +366,8 @@ if [[ -z "$1" ]]; then
   die "USAGE: $0 <subcommand> [ <arg> ... ]"
 fi
 
+trap "exit 255" INT
+
 action="$1"
 shift
 
