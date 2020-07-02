@@ -161,32 +161,66 @@ create_user() {
 
 # copy account files into data directory for persistence
 backup_accounts() {
-  cp "${account_files[@]}" "$datadir/"
+  mkdir -p "$userdata_dir"
+  cp "${account_files[@]}" "$userdata_dir/"
 }
 
 # copy account files from data directory to restore
 restore_accounts() {
-  if [[ ! -s "/data/passwd" ]]; then
+  if [[ ! -s "$userdata_dir/passwd" ]]; then
     warn "No accounts to restore."
 
     return
   fi
-  cp /data/* /etc/
+  cp "$userdata_dir"/* /etc/
 
   chown root:root "${account_files[@]}"
   chmod 600 /etc/shadow /etc/shadow-
   chmod 640 /etc/passwd /etc/passwd- /etc/group /etc/group-
 }
 
+configure_host_keys() {
+  if [[ ! -d "$hostkey_dir" ]]; then
+    warn "No existing ssh host keys backed up. Re-generating"
+
+    # if the local backup doesn't exist, make one.
+    mkdir -p "$hostkey_dir"
+
+    warn "Generating..."
+    rm /etc/ssh/ssh_host_*
+    ssh-keygen -A
+
+    warn "Backing up new keys to $hostkey_dir"
+    cp /etc/ssh/ssh_host_* "$hostkey_dir/"
+  fi
+
+  warn "Restoring host keys."
+
+  # then copy everything from the local backup into the system
+  cp "$hostkey_dir"/* /etc/ssh/
+
+  # all host keys should be owned by root
+  chown root:root /etc/ssh/ssh_host_*
+
+  # all private keys are 600
+  chmod 600 /etc/ssh/ssh_host_*_key
+
+  # all public keys are 644
+  chmod 644 /etc/ssh/ssh_host_*_key.pub
+}
+
 action_init() {
   local userdata
 
-  # first, restore accounts
+  # first, restore accounts and ensure persistent host keys
   restore_accounts
+  configure_host_keys
 
   if [[ -s "$userfile" ]]; then
-    mapfile -t users < "$userfile"
+    mapfile -t users \
+      < "$userfile"
 
+    local user
     for user in "${users[@]}"; do
       if [[ -z "$user" || "$user" = "#"* ]]; then
         continue
@@ -210,15 +244,52 @@ action_add() {
   create_user "$@"
 }
 
+# update all of the users on the system
+# this is done by re-reading the userdb
+# and running the update_user() function on each user
+action_update() {
+  local userdata
+
+  local username
+  local gh_username
+
+  if [[ -s "$userfile" ]]; then
+    mapfile -t users \
+      < "$userfile"
+
+    local user
+    for user in "${users[@]}"; do
+      if [[ -z "$user" || "$user" = "#"* ]]; then
+        continue
+      fi
+
+      userdata="$( tr '|' $'\n' <<< "$user" )"
+      mapfile -t userdata <<< "$userdata"
+
+
+      username="${userdata[0]}"
+      gh_username="${userdata[2]}"
+
+      update_user "$username" "$gh_username"
+    done
+  fi
+}
+
 mountsdir="/mounts"
 
 userfile=/users.txt
 
 datadir="/data"
+
+userdata_dir="$datadir/users"
+
 account_files=(
   /etc/{shadow,group,passwd}
   /etc/{shadow,group,passwd}-
 )
+
+# this directory contains /etc/ssh/ssh_host_*
+hostkey_dir="$datadir/host_keys"
 
 # userfile looks like:
 # <username>|<email>|<github-username>
@@ -237,6 +308,10 @@ case "$action" in
 
   add)
     action_add "$@"
+    ;;
+
+  update)
+    action_update "$@"
     ;;
 
   *)

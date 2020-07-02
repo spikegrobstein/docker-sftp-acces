@@ -13,10 +13,9 @@ COPY files/sshd_config /etc/ssh/sshd_config
 COPY files/sftpctl /usr/bin/sftpctl
 COPY files/data /data
 
-RUN mkdir -p /run/sshd /ssh-keys \
+RUN mkdir -p /run/sshd \
       && touch /users.txt \
-      && chmod +x /usr/bin/sftpctl \
-      && mv /etc/ssh/ssh_host_*key /ssh-keys/
+      && chmod +x /usr/bin/sftpctl
 
 EXPOSE 22
 VOLUME /ssh-keys

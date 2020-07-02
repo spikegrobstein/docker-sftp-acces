@@ -96,7 +96,7 @@ or a local filesystem mount to persist data between runs/reboots.
 
 ## Todo
 
- * provide a way to update github ssh keys and mounts
+ * persist host keys
  * provide per-user mounts
  * chroot?
  * provide tooling to list users
