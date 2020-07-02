@@ -168,11 +168,10 @@ create_user() {
 
   # set -x
 
-  if useradd \
-    -d "$homedir" \
-    -m \
-    -s /bin/rbash \
-    -c "$email" \
+  if adduser \
+    --home "$homedir" \
+    --gecos "$email" \
+    --disabled-password \
     "$username"
   then
     warn "User created!"
