@@ -285,18 +285,18 @@ action_init() {
   exec /usr/sbin/sshd -D -e
 }
 
-action_add() {
-  if [[ "$#" -ne 3 ]]; then
-    die "Incorrect usage"
-  fi
+action_add-user() {
+  local username="$1"
+  local email="$2"
+  local gh_username="${3:-}"
 
-  create_user "$@"
+  create_user "$username" "$email" "$gh_username"
 }
 
 # update all of the users on the system
 # this is done by re-reading the userdb
 # and running the update_user() function on each user
-action_update() {
+action_sync() {
   local userdata
 
   local username
@@ -374,16 +374,16 @@ case "$action" in
     action_init "$@"
     ;;
 
-  add)
-    action_add "$@"
+  add-user)
+    action_add-user "$@"
     ;;
 
   add-key)
     action_add-key "$@"
     ;;
 
-  update)
-    action_update "$@"
+  sync)
+    action_sync"$@"
     ;;
 
   *)
