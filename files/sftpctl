@@ -84,12 +84,17 @@ db::list_usernames() {
 # it will not delete keys. it's strictly additive.
 sync_user_keys() {
   local username="$1"
-  local gh_username="$2"
+  local gh_username="${2:-""}"
 
   local homedir="/home/$username"
 
   # set up ssh keys for the user
   mkdir -p "$homedir/.ssh"
+
+  if [[ -z "$gh_username" ]]; then
+    warn "Skipping sync of ssh keys. User $username has no github config."
+    return
+  fi
 
   warn "Fetching keys for $username (github: $gh_username)"
   curl \
@@ -98,6 +103,7 @@ sync_user_keys() {
     "https://github.com/${gh_username}.keys" \
     >> "$homedir/.ssh/authorized_keys"
 
+  # dedupe the authorized_keys file.
   cat "$homedir/.ssh/authorized_keys" \
     | sort -u \
     | sponge "$homedir/.ssh/authorized_keys"
@@ -176,6 +182,7 @@ create_user() {
   then
     warn "User created!"
 
+    # add the user to the user database file
     db::add "$userfile" "$username" "$email" "$gh_username"
   fi
 
