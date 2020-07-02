@@ -79,6 +79,23 @@ db::list_usernames() {
     | sort -u
 }
 
+dedupe_user_keys() {
+  local username="$1"
+
+  local homedir="/home/$username"
+
+  cat "$homedir/.ssh/authorized_keys" \
+    | sort -u \
+    | sponge "$homedir/.ssh/authorized_keys"
+
+}
+
+validate_key() {
+  local key="$1"
+
+  ssh-keygen -l -f - <<< "$key"
+}
+
 # synchronize the given user's keys with github
 # this will only ensure that whatever is in github exists locally.
 # it will not delete keys. it's strictly additive.
@@ -104,9 +121,7 @@ sync_user_keys() {
     >> "$homedir/.ssh/authorized_keys"
 
   # dedupe the authorized_keys file.
-  cat "$homedir/.ssh/authorized_keys" \
-    | sort -u \
-    | sponge "$homedir/.ssh/authorized_keys"
+  dedupe_user_keys "$username"
 
   warn "Updated keys for $username"
 }
@@ -309,6 +324,25 @@ action_update() {
   fi
 }
 
+action_add-key() {
+  local username="$1"
+  local key="$2"
+
+  local homedir="/home/$username"
+
+  if ! validate_key "$key"; then
+    # bad key
+    return 1
+  fi
+
+  printf "\n%s" "$key" \
+    >> "$homedir/.ssh/authorized_keys"
+
+  dedupe_user_keys "$username"
+
+  warn "Appended key for $username"
+}
+
 mountsdir="/mounts"
 
 userfile=/users.txt
@@ -342,6 +376,10 @@ case "$action" in
 
   add)
     action_add "$@"
+    ;;
+
+  add-key)
+    action_add-key "$@"
     ;;
 
   update)
