@@ -1,0 +1,9 @@
+
+Welcome to SFTP Access.
+=======================
+
+This message can be overridden by mounting a file at /etc/motd
+
+https://github.com/spikegrobstein/docker-sftp-access
+
+

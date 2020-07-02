@@ -13,12 +13,16 @@ COPY files/sshd_config /etc/ssh/sshd_config
 COPY files/sftpctl /usr/bin/sftpctl
 COPY files/data /data
 COPY files/adduser.conf /etc/adduser.conf
+COPY files/motd /etc/motd
 
 RUN mkdir -p /run/sshd \
       && touch /users.txt \
       && chmod +x /usr/bin/sftpctl \
       && umask 0066 \
-      && rm /etc/skel/.bash* /etc/skel/.profile
+      && rm -rf \
+          /etc/skel/.bash* \
+          /etc/skel/.profile \
+          /etc/update-motd.d/
 
 EXPOSE 22
 VOLUME /ssh-keys
