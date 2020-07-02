@@ -79,7 +79,10 @@ db::list_usernames() {
     | sort -u
 }
 
-update_user() {
+# synchronize the given user's keys with github
+# this will only ensure that whatever is in github exists locally.
+# it will not delete keys. it's strictly additive.
+sync_user_keys() {
   local username="$1"
   local gh_username="$2"
 
@@ -88,7 +91,11 @@ update_user() {
   # set up ssh keys for the user
   mkdir -p "$homedir/.ssh"
 
-  curl "https://github.com/${gh_username}.keys" \
+  warn "Fetching keys for $username (github: $gh_username)"
+  curl \
+    --silent \
+    --show-error \
+    "https://github.com/${gh_username}.keys" \
     >> "$homedir/.ssh/authorized_keys"
 
   cat "$homedir/.ssh/authorized_keys" \
@@ -96,8 +103,14 @@ update_user() {
     | sponge "$homedir/.ssh/authorized_keys"
 
   warn "Updated keys for $username"
-  # cat "$homedir/.ssh/authorized_keys"
+}
 
+fix_ownership() {
+  local username="$1"
+
+  local homedir="/home/$username"
+
+  local d
   # make sure the user owns their stuff
   for d in "$homedir"/*; do
     if [[ -L "$d" ]]; then
@@ -108,23 +121,38 @@ update_user() {
     warn "Ensuring ownership of $d"
     chown -R "${username}:${username}" "$d"
   done
+}
 
-  pushd "$homedir" &> /dev/null
+sync_mounts() {
+  local username="$1"
 
-  local dir_name 
+  local homedir="/home/$username"
 
-  # create the mounts
-  for d in /mounts/*; do
-    dir_name=$( basename "$d" )
+  ( # subshell to ensure we're not left checked out of the directory
+    pushd "$homedir" &> /dev/null
 
-    if [[ -L "$dir_name" ]]; then
-      continue
-    fi
+    local dir_name 
 
-    ln -s "$d"
-  done
+    # create the mounts
+    for d in "$mountsdir"/*; do
+      dir_name=$( basename "$d" )
 
-  popd &> /dev/null
+      if [[ -L "$dir_name" ]]; then
+        continue
+      fi
+
+      ln -s "$d"
+    done
+  )
+}
+
+update_user() {
+  local username="$1"
+  local gh_username="$2"
+
+  sync_user_keys "$username" "$gh_username"
+  fix_ownership "$username"
+  sync_mounts "$username"
 }
 
 create_user() {
