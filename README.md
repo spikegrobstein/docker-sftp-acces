@@ -96,7 +96,6 @@ or a local filesystem mount to persist data between runs/reboots.
 
 ## Todo
 
- * persist host keys
  * provide per-user mounts
  * chroot?
  * provide tooling to list users
