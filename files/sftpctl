@@ -79,6 +79,13 @@ db::list_usernames() {
     | sort -u
 }
 
+users::list_existing() {
+  getent passwd \
+    | sed -E 's|:.+$||' \
+    | sort -u \
+    | grep -vE '^(root|sshd)$'
+}
+
 dedupe_user_keys() {
   local username="$1"
 
@@ -343,6 +350,10 @@ action_add-key() {
   warn "Appended key for $username"
 }
 
+action_list-users() {
+  users::list_existing
+}
+
 mountsdir="/mounts"
 
 userfile=/users.txt
@@ -366,8 +377,6 @@ if [[ -z "$1" ]]; then
   die "USAGE: $0 <subcommand> [ <arg> ... ]"
 fi
 
-trap "exit 255" INT
-
 action="$1"
 shift
 
@@ -386,6 +395,10 @@ case "$action" in
 
   sync)
     action_sync"$@"
+    ;;
+
+  list-users)
+    action_list-users "$@"
     ;;
 
   *)
