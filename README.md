@@ -10,6 +10,31 @@ When properly configured, this container will persist user accounts and settings
 At this time, it's expected that one builds this Docker image themselves as it allows for the most
 customisation (eg: custom `sshd_config`).
 
+## Quickstart
+
+To get started quickly, first, clone this repo and build the docker image:
+
+    docker build --tag sftp-access .
+
+Then, start the container:
+
+    docker run \
+      -d \
+      --rm \
+      --name sftp-access \
+      --volume "$PWD/data:/data" \
+      --volume "$PWD/home:/home" \
+      --volume "/mnt/nas/Photos:/mounts/Photos:ro" \
+      --volume "/mnt/nas/Documents:/mounts/Documents:ro" \
+      -p 2222:22 \
+      sftp-access:latest
+
+Then, add a user:
+
+    docker exec sftp-access sftpctl add-user carl carl@example.com coralisdead
+
+Below is details on how everything works.
+
 ## `sftpctl`
 
 The `sftpctl` utility is the main point of interaction in the running container. It is used for user
