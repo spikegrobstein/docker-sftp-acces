@@ -276,6 +276,9 @@ subcommand::init() {
   restore_accounts
   configure_host_keys
 
+  # userfile looks like:
+  # <username>|<email>|<github-username>
+
   if [[ -s "$userfile" ]]; then
     mapfile -t users \
       < "$userfile"
@@ -358,24 +361,23 @@ subcommand::list-users() {
   users::list_existing
 }
 
-mountsdir="/mounts"
-
-userfile=/users.txt
-
-datadir="/data"
-
-userdata_dir="$datadir/users"
-
+# constants:
 account_files=(
   /etc/{shadow,group,passwd}
   /etc/{shadow,group,passwd}-
 )
 
+mountsdir="/mounts"
+datadir="/data"
+
+userfile="$datadir/userdb"
+userdata_dir="$datadir/users"
+
 # this directory contains /etc/ssh/ssh_host_*
 hostkey_dir="$datadir/host_keys"
 
-# userfile looks like:
-# <username>|<email>|<github-username>
+# end constants
+
 
 print_usage() {
   warn "USAGE: $0 <subcommand> [ <arg> ... ]"
