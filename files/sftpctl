@@ -7,6 +7,10 @@ shopt -s nullglob
 shopt -s dotglob
 
 warn() {
+  if [[ "$#" -eq 0 ]]; then
+    return
+  fi
+
   printf "%s\n" "$@" >&2
 }
 
@@ -265,7 +269,7 @@ configure_host_keys() {
   chmod 644 /etc/ssh/ssh_host_*_key.pub
 }
 
-action_init() {
+subcommand::init() {
   local userdata
 
   # first, restore accounts and ensure persistent host keys
@@ -292,7 +296,7 @@ action_init() {
   exec /usr/sbin/sshd -D -e
 }
 
-action_add-user() {
+subcommand::add-user() {
   local username="$1"
   local email="$2"
   local gh_username="${3:-}"
@@ -303,7 +307,7 @@ action_add-user() {
 # update all of the users on the system
 # this is done by re-reading the userdb
 # and running the update_user() function on each user
-action_sync() {
+subcommand::sync() {
   local userdata
 
   local username
@@ -331,7 +335,7 @@ action_sync() {
   fi
 }
 
-action_add-key() {
+subcommand::add-key() {
   local username="$1"
   local key="$2"
 
@@ -350,7 +354,7 @@ action_add-key() {
   warn "Appended key for $username"
 }
 
-action_list-users() {
+subcommand::list-users() {
   users::list_existing
 }
 
@@ -373,35 +377,30 @@ hostkey_dir="$datadir/host_keys"
 # userfile looks like:
 # <username>|<email>|<github-username>
 
+print_usage() {
+  warn "USAGE: $0 <subcommand> [ <arg> ... ]"
+}
+
 if [[ -z "$1" ]]; then
-  die "USAGE: $0 <subcommand> [ <arg> ... ]"
+  print_usage
+  die
 fi
 
 action="$1"
 shift
 
-case "$action" in
-  init)
-    action_init "$@"
-    ;;
+subcommand_function="subcommand::${action}"
 
-  add-user)
-    action_add-user "$@"
-    ;;
+# make sure subcommand is defined
+if ! fn="$( type -t "$subcommand_function" )"; then
+  die "Unknown subcommand: $action"
+fi
 
-  add-key)
-    action_add-key "$@"
-    ;;
+# make sure it's a function (quick security check)
+if [[ "$fn" != "function" ]]; then
+  die "Unknown subcommand: $action"
+fi
 
-  sync)
-    action_sync"$@"
-    ;;
-
-  list-users)
-    action_list-users "$@"
-    ;;
-
-  *)
-    die "Unknown subcommand: $action"
-esac
+# call the subcommand handler
+"$subcommand_function" "$@"
 
