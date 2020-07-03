@@ -22,7 +22,8 @@ RUN mkdir -p /run/sshd \
       && rm -rf \
           /etc/skel/.bash* \
           /etc/skel/.profile \
-          /etc/update-motd.d/
+          /etc/update-motd.d/ \
+          /etc/legal
 
 EXPOSE 22
 VOLUME /ssh-keys
