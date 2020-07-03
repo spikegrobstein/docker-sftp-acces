@@ -11,9 +11,9 @@ RUN apt update \
 
 COPY files/sshd_config /etc/ssh/sshd_config
 COPY files/sftpctl /usr/bin/sftpctl
-COPY files/data /data
 COPY files/adduser.conf /etc/adduser.conf
 COPY files/motd /etc/motd
+COPY files/users/* /etc/
 
 RUN mkdir -p /run/sshd \
       && touch /users.txt \
