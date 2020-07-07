@@ -335,6 +335,8 @@ subcommand::sync() {
 
       update_user "$username" "$gh_username"
     done
+  else
+    warn "no userfile found: $userfile"
   fi
 }
 
